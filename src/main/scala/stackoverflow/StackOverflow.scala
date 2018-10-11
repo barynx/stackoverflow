@@ -176,10 +176,10 @@ class StackOverflow extends Serializable {
 
   /** Main kmeans computation */
   @tailrec final def kmeans(means: Array[(Int, Int)], vectors: RDD[(Int, Int)], iter: Int = 1, debug: Boolean = false): Array[(Int, Int)] = {
-    val newMeans = means.clone()
+    val persistentVectors = vectors.persist()
 
-    val newMeansWithIndex = vectors.map(vector => findClosest(vector, means) -> vector).groupByKey.mapValues(averageVectors).collect()
-    newMeansWithIndex.foreach(item => newMeans.update(item._1, item._2))
+    val newMeans = means.clone()
+    persistentVectors.map(vector => (findClosest(vector, means), vector)).groupByKey.mapValues(averageVectors).collect().foreach(item => newMeans.update(item._1, item._2))
 
     //val oldMeansAndVectors = vectors.map(x => (findClosest(x, means), x)).groupByKey()
     //val newMeans = oldMeansAndVectors.mapValues(x => averageVectors(x)).map(x => x._2).collect()
